@@ -59,32 +59,32 @@ end
 %% ------------------------------------------------------------------------
 
 %% 1. Step Response
-figure;
-step(Tcl, 30);
-title("Closed-Loop Step Response");
-grid on;
+%figure;
+%step(Tcl, 30);
+%title("Closed-Loop Step Response");
+%grid on;
 
 %% 2. Disturbance Rejection (inject a step on plant input)
-DistTF = feedback(G, C);  % TF from disturbance to output
-figure;
-step(DistTF);
-title("Disturbance Response (gravity)");
-grid on;
+%DistTF = feedback(G, C);  % TF from disturbance to output
+%figure;
+%step(DistTF);
+%title("Disturbance Response (gravity)");
+%grid on;
 
 %% 3. Bode Plots
-figure;
-bode(G); grid on; title("Bode Plot of G(s)");
+%figure;
+%bode(G); grid on; title("Bode Plot of G(s)");
 
-figure;
-bode(C); grid on; title("Bode Plot of C(s)");
+%figure;
+%bode(C); grid on; title("Bode Plot of C(s)");
 
 figure;
 bode(L); grid on; title("Bode Plot of Open-Loop L(s)=C(s)G(s)");
 
 %% 4. Root Locus
-figure;
-rlocus(L);
-title("Root Locus of L(s)=C(s)G(s)");
+%figure;
+%rlocus(L);
+%title("Root Locus of L(s)=C(s)G(s)");
 
 %% 5. Simulink output plots -----------------------------------------------
 if exist('out','var')
@@ -97,16 +97,16 @@ if exist('out','var')
     figure;
     plot(t, h, 'LineWidth',1.5);
     xlabel("Time (s)"); ylabel("Height h(t)");
-    title("Output h(t)");
+    title("h(t) above Delay Limit","FontSize", 18);
     grid on;
 
-    figure;
-    plot(t, F_r, 'LineWidth',1.5); hold on;
-    plot(t, F_g, 'LineWidth',1.5);
-    plot(t, F_net,'LineWidth',1.5);
-    legend("Reference Force F_r","Gravity F_g","Net Force");
-    title("Force Signals");
-    grid on;
+    %figure;
+    %plot(t, F_r, 'LineWidth',1.5); hold on;
+    %plot(t, F_g, 'LineWidth',1.5);
+    %plot(t, F_net,'LineWidth',1.5);
+    %legend("Reference Force F_r","Gravity F_g","Net Force");
+    %title("Force Signals");
+    %grid on;
 end
 
 %% ------------------------------------------------------------------------
@@ -129,3 +129,39 @@ T_const = -1./re;
 Table_T = table(re,im,mag,Z,T_const, ...
     'VariableNames',{'Real','Imag','Abs','Zeta','Tau'})
 
+
+
+%% ------------------------------------------------------------------------
+%% ROBUSTNESS ANALYSIS VALUES FOR LATEX REPORT
+%% ------------------------------------------------------------------------
+
+% Compute gain/phase margins and crossover frequencies
+[Gm, Pm, Wcg, Wcp] = margin(L);
+
+% Convert GM from absolute ratio to dB
+Gm_dB = 20*log10(Gm);
+
+% Compute allowable time delay at phase margin frequency
+% T_delay_max = PM / wc  (PM must be in radians)
+PM_rad = Pm * (pi/180);
+T_delay_max = PM_rad / Wcp;
+
+% Values just below / just above the delay margin for simulation tests
+T_delay_below = 0.9 * T_delay_max;   % 10% below
+T_delay_above = 1.1 * T_delay_max;   % 10% above
+
+%% DISPLAY RESULTS ---------------------------------------------------------
+
+fprintf("\n==================== ROBUSTNESS ANALYSIS ====================\n");
+
+fprintf("Gain Margin (absolute):        %.4f\n", Gm);
+fprintf("Gain Margin (dB):              %.4f dB\n", Gm_dB);
+fprintf("Phase Margin:                  %.4f deg\n", Pm);
+fprintf("Gain Crossover Frequency:      %.4f rad/s\n", Wcg);
+fprintf("Phase Crossover Frequency:     %.4f rad/s\n", Wcp);
+
+fprintf("\nMaximum Allowable Time Delay:  %.6f seconds\n", T_delay_max);
+fprintf("Delay Just Below Margin:       %.6f seconds\n", T_delay_below);
+fprintf("Delay Just Above Margin:       %.6f seconds\n", T_delay_above);
+
+fprintf("==============================================================\n");
